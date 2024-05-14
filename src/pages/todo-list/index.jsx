@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button, Card, Col, Row } from "antd";
 import { BoxItem } from "./styled";
 
@@ -52,6 +52,7 @@ const TodoList = () => {
 
   const [fruitData, setFruitData] = useState([]);
   const [vegetableData, setVegetableData] = useState([]);
+  const [timeoutIds, setTimeoutIds] = useState({});
 
   const onSelectData = async (row, index) => {
     if (row.type === "Fruit") {
@@ -59,6 +60,10 @@ const TodoList = () => {
       result["delete"] = "0";
       setFruitData([...fruitData, result]);
       setData((prevData) => prevData.filter((t) => t.name !== result.name));
+      if (timeoutIds[result.name]) {
+        clearTimeout(timeoutIds[result.name]);
+      }
+
       deleteOn5Sec(result);
     }
     if (row.type === "Vegetable") {
@@ -66,6 +71,10 @@ const TodoList = () => {
       result["delete"] = "0";
       setVegetableData([...vegetableData, result]);
       setData((prevData) => prevData.filter((t) => t.name !== result.name));
+
+      if (timeoutIds[result.name]) {
+        clearTimeout(timeoutIds[result.name]);
+      }
       deleteOn5Sec(result);
     }
   };
@@ -77,6 +86,15 @@ const TodoList = () => {
       prevFruit.filter((fruit) => fruit.name !== result.name)
     );
     setData((prevArray) => [...prevArray, result]);
+
+    if (timeoutIds[result.name]) {
+      clearTimeout(timeoutIds[result.name]);
+      setTimeoutIds((prevTimeoutIds) => {
+        const newTimeoutIds = { ...prevTimeoutIds };
+        delete newTimeoutIds[result.name];
+        return newTimeoutIds;
+      });
+    }
   };
 
   const onDeleteVegetable = (row, index) => {
@@ -86,11 +104,20 @@ const TodoList = () => {
       prevVegetable.filter((vegetable) => vegetable.name !== result.name)
     );
     setData((prevArray) => [...prevArray, result]);
+
+    if (timeoutIds[result.name]) {
+      clearTimeout(timeoutIds[result.name]);
+      setTimeoutIds((prevTimeoutIds) => {
+        const newTimeoutIds = { ...prevTimeoutIds };
+        delete newTimeoutIds[result.name];
+        return newTimeoutIds;
+      });
+    }
   };
 
   const deleteOn5Sec = (result) => {
     if (result.type === "Fruit") {
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         setFruitData((prevFruit) =>
           prevFruit.filter((fruit) => fruit.name !== result.name)
         );
@@ -98,9 +125,14 @@ const TodoList = () => {
           setData((prevData) => [...prevData, result]);
         }
       }, 5000);
+
+      setTimeoutIds((prevTimeoutIds) => ({
+        ...prevTimeoutIds,
+        [result.name]: timeoutId,
+      }));
     }
     if (result.type === "Vegetable") {
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         setVegetableData((prevVegetable) =>
           prevVegetable.filter((vegetable) => vegetable.name !== result.name)
         );
@@ -108,8 +140,13 @@ const TodoList = () => {
           setData((prevData) => [...prevData, result]);
         }
       }, 5000);
+      setTimeoutIds((prevTimeoutIds) => ({
+        ...prevTimeoutIds,
+        [result.name]: timeoutId,
+      }));
     }
   };
+  useEffect(() => {}, []);
   return (
     <>
       <Row gutter={[16, 16]}>
